@@ -1,0 +1,35 @@
+image: python:3.9
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - .venv/
+
+before_script:
+  - python -V
+  - python -m venv .venv
+  - source .venv/bin/activate
+  - python -m pip install --upgrade pip
+  - python -m pip install poetry
+  - poetry install
+
+stages:
+  - lint
+  - test
+
+lint:
+  stage: lint
+  script:
+    - flake8 --jobs 4 --statistics --show-source tests app
+    - pylint --jobs 4 --rcfile=setup.cfg tests app
+    - mypy tests app
+    - black --skip-string-normalization --check tests app
+
+test:
+  stage: test
+  script:
+    - export SECRET_KEY='7bb00ea8b04d43de8bd189647be725b783bbe3222756e9b90fb57a12b42e79c9'
+    - pytest -v tests

@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ENVIRONMENT: ${ENVIRONMENT:-development}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      REDIS_URL: 'redis://redis:6379/0'
+      SQLITE_URL: 'sqlite+aiosqlite:///news.db'
+
+      # fix it in production: add secrets or .env file dependency
+      SECRET_KEY: '7bb00ea8b04d43de8bd189647be725b783bbe3222756e9b90fb57a12b42e79c9'
+    volumes:
+      - '.:/opt/app'
+
+  redis:
+    image: 'redis:6'
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+
+  redis-cli:
+    image: 'redis:6'
+    links:
+      - redis
+    command: redis-cli -h redis
